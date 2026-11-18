@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mô phỏng lực giật súng trường</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+<style>
+:root{--bg:#FAF9F5;--fg:#2C2C2A;--mut:#5F5E5A;--line:#B4B2A9;--card:#FFFFFF;--bd:#D3D1C7;--acc:#2C2C2A;--onacc:#FFFFFF;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1F1E1D;--fg:#F1EFE8;--mut:#B4B2A9;--line:#5F5E5A;--card:#2C2C2A;--bd:#444441;--acc:#F1EFE8;--onacc:#1F1E1D}}
+:root[data-theme="dark"]{--bg:#1F1E1D;--fg:#F1EFE8;--mut:#B4B2A9;--line:#5F5E5A;--card:#2C2C2A;--bd:#444441;--acc:#F1EFE8;--onacc:#1F1E1D}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.wrap{max-width:560px;margin:0 auto;padding:16px}
+h1{font-size:20px;font-weight:500;margin:4px 0 12px}
+.stage{background:#CFE3E8;border:1px solid var(--bd);border-radius:12px;padding:8px}
+.stage text{fill:#3d4f54}
+svg{width:100%;height:auto;display:block}
+.row{display:flex;align-items:center;gap:12px;margin:14px 0}
+.row label{font-size:14px;color:var(--mut);min-width:64px}
+.row output{font-size:14px;font-weight:500;min-width:28px;text-align:right}
+input[type=range]{flex:1;accent-color:var(--acc)}
+.seg{display:flex;border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin:14px 0}
+.seg button{flex:1;padding:12px;font-size:15px;background:transparent;color:var(--fg);border:0;cursor:pointer}
+.seg button.on{background:var(--acc);color:var(--onacc)}
+#fire{width:100%;padding:18px;font-size:17px;font-weight:500;border-radius:12px;border:0;background:var(--acc);color:var(--onacc);cursor:pointer}
+#fire:active{transform:scale(.98)}
+.stat{font-size:14px;color:var(--mut);margin:10px 2px 0;font-variant-numeric:tabular-nums}
+.hint{font-size:13px;color:var(--mut);margin:10px 2px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Mô phỏng lực giật súng trường</h1>
+<div class="stage">
+<svg viewBox="0 0 380 210" role="img" aria-label="Súng trường nhìn ngang, lùi về vai và hất nòng lên khi bắn">
+<line x1="40" y1="103" x2="365" y2="103" stroke="#888780" stroke-width="0.8" stroke-dasharray="4 4"/>
+<text x="232" y="192" font-size="12" fill="#888780">Đường ngắm ban đầu</text>
+<line x1="250" y1="180" x2="250" y2="107" stroke="#888780" stroke-width="0.5" stroke-dasharray="2 3"/>
+<g id="casings"></g>
+<g id="rifle">
+<polygon points="40,90 105,98 105,114 50,130 40,130" fill="#8B5A2B"/>
+<polygon points="110,118 126,118 122,152 106,152" fill="#5C3A1C"/>
+<path d="M126,118 L126,134 L152,134 L152,118" fill="none" stroke="#2a2a2a" stroke-width="2"/>
+<path d="M139,118 L136,129" fill="none" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+<polygon points="140,118 168,118 178,160 160,168 148,142" fill="#2a2a2a"/>
+<rect x="100" y="94" width="72" height="24" rx="2" fill="#3a3a3a"/>
+<rect x="104" y="89" width="62" height="6" rx="1" fill="#4a4a4a"/>
+<rect x="172" y="97" width="68" height="18" rx="3" fill="#A0693A"/>
+<rect x="172" y="90" width="68" height="6" fill="#555"/>
+<rect x="240" y="100" width="72" height="6" fill="#222"/>
+<rect x="246" y="86" width="9" height="16" fill="#333"/>
+<rect x="296" y="90" width="5" height="12" fill="#222"/>
+<rect x="312" y="98" width="10" height="10" fill="#1a1a1a"/>
+<g id="flash" style="display:none">
+<polygon points="322,103 338,92 336,100 356,103 336,106 338,114" fill="#FAC775"/>
+<polygon points="322,103 332,98 344,103 332,108" fill="#FCEBEB"/>
+</g>
+</g>
+<circle cx="40" cy="103" r="3" fill="#E24B4A"/>
+<text x="46" y="80" font-size="12" fill="#888780">Vai</text>
+</svg>
+</div>
+
+<p class="stat" id="stat">Nòng nâng: 0°</p>
+<div class="seg" role="group" aria-label="Chế độ bắn">
+<button id="mSingle" class="on">Bắn đơn</button>
+<button id="mAuto">Liên thanh</button>
+</div>
+
+<div class="row" id="rateRow" style="display:none"><label for="rt">Tốc độ</label><input type="range" id="rt" min="3" max="15" step="1" value="10"><output id="rto">10</output></div>
+
+<button id="fire">Bắn</button>
+<p class="hint" id="hint">Chạm một lần để bắn một phát. Nòng nhấc lên rồi người bắn kéo về lại.</p>
+</div>
+
+<script>
+var rifle=document.getElementById('rifle'),flash=document.getElementById('flash'),cas=document.getElementById('casings');
+var rt=document.getElementById('rt'),rto=document.getElementById('rto');
+var fireBtn=document.getElementById('fire'),hint=document.getElementById('hint'),rateRow=document.getElementById('rateRow');
+var mS=document.getElementById('mSingle'),mA=document.getElementById('mAuto');
+var x=0,vx=0,a=0,va=0,flashT=0,auto=false,holding=false,nextShot=0,last=performance.now(),parts=[];
+var climb=0,push=0,burstN=0,stat=document.getElementById('stat');
+rt.oninput=function(){rto.textContent=rt.value};
+function setMode(isAuto){
+auto=isAuto;holding=false;
+mA.classList.toggle('on',isAuto);mS.classList.toggle('on',!isAuto);
+rateRow.style.display=isAuto?'flex':'none';
+hint.textContent=isAuto?'Nhấn giữ nút Bắn: giữ càng lâu, nòng càng bị hất lên và súng càng dồn về vai. Thả ra để người bắn kéo nòng về.':'Chạm một lần để bắn một phát. Nòng nhấc lên rồi người bắn kéo về lại.';
+}
+mS.onclick=function(){setMode(false)};
+mA.onclick=function(){setMode(true)};
+function shoot(){
+var s=5;
+var j=0.85+Math.random()*0.3;
+vx-=s*30*j;va-=s*14*j;flashT=0.05;
+if(auto){burstN++;var f=Math.min(burstN,12)/12;climb+=s*0.25*(0.5+0.7*f)*(1-Math.min(climb/(s*2.4),0.9));push+=s*0.25*(1-Math.min(push/(s*3),0.8))}
+else{burstN=0;climb+=s*0.3;push+=s*0.1}
+var el=document.createElementNS('http://www.w3.org/2000/svg','rect');
+el.setAttribute('width','7');el.setAttribute('height','3');el.setAttribute('fill','#BA7517');
+cas.appendChild(el);
+parts.push({el:el,x:150+x,y:92,vx:-20+Math.random()*30,vy:-130-Math.random()*40,r:0,vr:500});
+}
+fireBtn.addEventListener('pointerdown',function(e){
+e.preventDefault();
+if(auto){holding=true;nextShot=0}else{shoot()}
+});
+['pointerup','pointercancel','pointerleave'].forEach(function(ev){
+fireBtn.addEventListener(ev,function(){holding=false});
+});
+function frame(now){
+var dt=Math.min((now-last)/1000,0.033);last=now;
+if(auto&&holding){nextShot-=dt;if(nextShot<=0){shoot();nextShot=1/(+rt.value)}}
+vx+=(-180*x-14*vx)*dt;x+=vx*dt;
+va+=(-150*a-10*va)*dt;a+=va*dt;
+var firing=auto&&holding;
+if(!firing)burstN=0;
+climb*=Math.exp(-(firing?0.35:(auto?2.5:6))*dt);
+push*=Math.exp(-(firing?0.3:4)*dt);
+var ang=Math.max(a-climb,-20),px=x-push;
+rifle.setAttribute('transform','translate('+px.toFixed(2)+' 0) rotate('+ang.toFixed(2)+' 40 103)');
+stat.textContent='Nòng nâng: '+Math.round(-ang)+'°'+(auto?' · Phát liên tiếp: '+burstN:'');
+if(flashT>0){flashT-=dt;flash.style.display='block'}else{flash.style.display='none'}
+for(var i=parts.length-1;i>=0;i--){
+var p=parts[i];p.vy+=500*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.r+=p.vr*dt;
+p.el.setAttribute('transform','translate('+p.x.toFixed(1)+' '+p.y.toFixed(1)+') rotate('+p.r.toFixed(0)+')');
+if(p.y>200){cas.removeChild(p.el);parts.splice(i,1)}
+}
+requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
